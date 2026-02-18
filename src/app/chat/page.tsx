@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import Sidebar from "@/components/Sidebar";
 import { Send, Loader2, Cloud, TrendingUp, Flag, FileText, X } from "lucide-react";
 
@@ -113,12 +113,14 @@ export default function ChatPage() {
     <div className="flex h-full min-h-screen w-full overflow-hidden flex-1 bg-background">
 
       {/* SIDEBAR */}
-      <Sidebar
+      <Sidebar 
+      
         onSelectChat={loadMessages}
         onNewChat={() => {
           setMessages([]);
           setChatId(null);
         }}
+
       />
 
       {/* CHAT AREA */}

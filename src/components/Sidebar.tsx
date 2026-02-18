@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { MessageSquare, Plus, Sparkles } from "lucide-react";
+import { LogOut, MessageSquare, Plus, Sparkles } from "lucide-react";
+import { signOut } from "next-auth/react";
 
 export default function Sidebar({
   onSelectChat,
@@ -54,6 +55,7 @@ export default function Sidebar({
 
       {/* Chat List */}
       <div className="flex-1 overflow-y-auto py-2">
+
         {chats.length === 0 ? (
           <div className="px-5 py-8 text-center">
             <MessageSquare className="w-12 h-12 text-muted-foreground/40 mx-auto mb-3" />
@@ -88,8 +90,20 @@ export default function Sidebar({
             ))}
           </div>
         )}
+     
+     
       </div>
 
+      <button 
+  onClick={() => signOut({ callbackUrl: "/" })}
+  className="mx-4 mb-4 flex items-center justify-center gap-2 rounded-xl bg-sidebar-accent py-2.5 text-sm font-medium text-sidebar-foreground hover:bg-sidebar-primary hover:text-sidebar-primary-foreground transition-all"
+>
+  <LogOut className="w-4 h-4" />
+  Logout
+</button>
+
     </div>
+
+
   );
 }
