@@ -3,13 +3,14 @@ import { groq } from "@ai-sdk/groq";
 import { db } from "@/lib/db";
 import { messages } from "@/lib/schema";
 import { getWeather } from "@/lib/weather";
+import { getStock } from "@/lib/stock";
+import { getNextRace } from "@/lib/f1";
 
 export const runtime = "edge";
 
 export async function POST(req: Request) {
   const { message, userId } = await req.json();
 
-  // Save user message
   await db.insert(messages).values({
     userId,
     role: "user",
@@ -18,11 +19,16 @@ export async function POST(req: Request) {
 
   let responseText = "";
 
-  // Simple tool detection
-  if (message.toLowerCase().includes("weather")) {
-    const words = message.split(" ");
-    const city = words[words.length - 1] || "Bangalore";
+  const lower = message.toLowerCase();
+
+  if (lower.includes("weather")) {
+    const city = message.replace(/weather/i, "").trim() || "Bangalore";
     responseText = await getWeather(city);
+  } else if (lower.includes("stock")) {
+    const symbol = message.replace(/stock/i, "").trim() || "AAPL";
+    responseText = await getStock(symbol);
+  } else if (lower.includes("f1") || lower.includes("race")) {
+    responseText = await getNextRace();
   } else {
     const result = streamText({
       model: groq("llama-3.1-8b-instant"),
@@ -32,7 +38,6 @@ export async function POST(req: Request) {
     responseText = await result.text;
   }
 
-  // Save AI response
   await db.insert(messages).values({
     userId,
     role: "assistant",
