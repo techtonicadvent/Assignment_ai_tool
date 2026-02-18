@@ -1,16 +1,35 @@
 import { streamText } from "ai";
 import { groq } from "@ai-sdk/groq";
 import { db } from "@/lib/db";
-import { messages } from "@/lib/schema";
+import { messages, chats } from "@/lib/schema";
+import { eq } from "drizzle-orm";
 import { getWeather } from "@/lib/weather";
 import { getStock } from "@/lib/stock";
 import { getNextRace } from "@/lib/f1";
+import { getServerSession } from "next-auth";
 
 export async function POST(req: Request) {
+  const session = await getServerSession();
+  
+  if (!session?.user?.email) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { message, chatId } = await req.json();
 
   if (!chatId) {
     return Response.json({ error: "Missing chatId" });
+  }
+
+  // ✅ Verify user owns this chat
+  const chat = await db
+    .select()
+    .from(chats)
+    .where(eq(chats.id, chatId))
+    .limit(1);
+
+  if (!chat || chat.length === 0 || chat[0].userId !== session.user.email) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   // ✅ SAVE USER MESSAGE FIRST

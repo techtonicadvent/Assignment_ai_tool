@@ -3,9 +3,17 @@ import { chats } from "@/lib/schema";
 import { groq } from "@ai-sdk/groq";
 import { streamText } from "ai";
 import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
 
 export async function POST(req: Request) {
-  const { userId, firstMessage } = await req.json();
+  const session = await getServerSession();
+  
+  if (!session?.user?.email) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const { firstMessage } = await req.json();
+  const userId = session.user.email;
 
   let title = "New Chat";
 

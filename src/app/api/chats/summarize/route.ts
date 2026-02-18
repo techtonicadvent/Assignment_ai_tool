@@ -1,11 +1,18 @@
 import { streamText } from "ai";
 import { groq } from "@ai-sdk/groq";
 import { db } from "@/lib/db";
-import { messages } from "@/lib/schema";
+import { messages, chats } from "@/lib/schema";
 import { eq } from "drizzle-orm";
 import { NextResponse } from "next/server";
+import { getServerSession } from "next-auth";
 
 export async function POST(req: Request) {
+  const session = await getServerSession();
+  
+  if (!session?.user?.email) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { chatId } = await req.json();
 
   if (!chatId) {
@@ -13,6 +20,16 @@ export async function POST(req: Request) {
   }
 
   try {
+    // ✅ Verify user owns this chat
+    const chat = await db
+      .select()
+      .from(chats)
+      .where(eq(chats.id, chatId))
+      .limit(1);
+
+    if (!chat || chat.length === 0 || chat[0].userId !== session.user.email) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
     // Fetch all messages for this chat
     const chatMessages = await db
       .select()

@@ -39,7 +39,6 @@ export default function ChatPage() {
     const res = await fetch("/api/chats/new", {
       method: "POST",
       body: JSON.stringify({
-        userId: session?.user?.email,
         firstMessage: firstMsg,
       }),
     });
