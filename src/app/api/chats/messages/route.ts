@@ -19,7 +19,6 @@ export async function GET(req: Request) {
     .where(eq(messages.chatId, chatId))
     .orderBy(messages.createdAt);
 
-  // Only return valid parsed messages
   const parsed = data
     .filter(m => m.content)
     .map(m => JSON.parse(m.content!));

@@ -9,18 +9,34 @@ import { getNextRace } from "@/lib/f1";
 export async function POST(req: Request) {
   const { message, chatId } = await req.json();
 
-  const lower = message.toLowerCase();
+  if (!chatId) {
+    return Response.json({ error: "Missing chatId" });
+  }
+
+  // ✅ SAVE USER MESSAGE FIRST
+  await db.insert(messages).values({
+    chatId,
+    role: "user",
+    content: JSON.stringify({
+      type: "text",
+      content: message,
+      user: true,
+    }),
+  });
+
   let response: any;
+  const lower = message.toLowerCase();
 
-  if (lower.startsWith("weather")) {
-    const city = message.replace(/weather/i, "").trim() || "Bangalore";
-    response = await getWeather(city);
+  // ✅ SMART TOOL ROUTING
+  if (lower.includes("weather")) {
+    const city = message.replace(/weather|in/gi, "").trim();
+    response = await getWeather(city || "Bangalore");
 
-  } else if (lower.startsWith("stock")) {
-    const symbol = message.replace(/stock/i, "").trim() || "AAPL";
-    response = await getStock(symbol);
+  } else if (lower.includes("stock")) {
+    const symbol = message.replace(/stock/gi, "").trim();
+    response = await getStock(symbol || "AAPL");
 
-  } else if (lower.includes("next f1") || lower.includes("next race")) {
+  } else if (lower.includes("f1") || lower.includes("race")) {
     response = await getNextRace();
 
   } else {
@@ -29,15 +45,18 @@ export async function POST(req: Request) {
       messages: [{ role: "user", content: message }],
     });
 
-    response = { type: "text", content: await result.text };
+    response = {
+      type: "text",
+      content: await result.text,
+    };
   }
 
+  // ✅ SAVE AI MESSAGE
   await db.insert(messages).values({
     chatId,
     role: "assistant",
     content: JSON.stringify(response),
   });
-  console.log(response);
 
   return Response.json(response);
 }

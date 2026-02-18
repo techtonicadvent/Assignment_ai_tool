@@ -120,7 +120,10 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html,
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground m-0 p-0;
+    height: 100%;
+    min-height: 100vh;
   }
 }

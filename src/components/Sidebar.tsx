@@ -21,6 +21,7 @@ export default function Sidebar({
 
   return (
     <div className="flex w-64 flex-col bg-white border-r">
+
       <div className="p-4">
         <button
           onClick={() => {
@@ -44,6 +45,7 @@ export default function Sidebar({
           </div>
         ))}
       </div>
+
     </div>
   );
 }
