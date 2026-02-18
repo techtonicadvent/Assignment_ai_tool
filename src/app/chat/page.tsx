@@ -1,10 +1,22 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 
 export default function ChatPage() {
+  const { data: session } = useSession();
   const [messages, setMessages] = useState<string[]>([]);
   const [input, setInput] = useState("");
+
+  // Load history on mount
+  useEffect(() => {
+    const loadHistory = async () => {
+      const res = await fetch("/api/history");
+      const data = await res.json();
+      setMessages(data);
+    };
+    loadHistory();
+  }, []);
 
   const sendMessage = async () => {
     if (!input) return;
@@ -13,27 +25,24 @@ export default function ChatPage() {
 
     const res = await fetch("/api/chat", {
       method: "POST",
-      body: JSON.stringify({ message: input }),
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        message: input,
+        userId: session?.user?.email,
+      }),
     });
 
-    const reader = res.body?.getReader();
-    const decoder = new TextDecoder();
-    let aiText = "";
-
-    if (reader) {
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        aiText += decoder.decode(value);
-        setMessages((prev) => [...prev.slice(0, -1), `AI: ${aiText}`]);
-      }
-    }
-
+    const reply = await res.text();
+    setMessages((prev) => [...prev, `AI: ${reply}`]);
     setInput("");
   };
 
   return (
     <div className="mx-auto max-w-xl p-4">
+      <h1 className="mb-4 text-2xl font-semibold">AI Chat</h1>
+
       <div className="mb-4 space-y-2">
         {messages.map((m, i) => (
           <div key={i} className="rounded bg-gray-100 p-2">
@@ -47,6 +56,7 @@ export default function ChatPage() {
           className="flex-1 rounded border p-2"
           value={input}
           onChange={(e) => setInput(e.target.value)}
+          placeholder="Ask something..."
         />
         <button
           className="rounded bg-black px-4 py-2 text-white"
