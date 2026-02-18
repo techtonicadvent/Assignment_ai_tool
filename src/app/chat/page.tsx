@@ -6,7 +6,12 @@ import Sidebar from "@/components/Sidebar";
 import { Send, Loader2, Cloud, TrendingUp, Flag, FileText, X } from "lucide-react";
 
 export default function ChatPage() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession({
+    required: true,
+    onUnauthenticated() {
+      window.location.href = "/";
+    },
+  });
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const [messages, setMessages] = useState<any[]>([]);
   const [input, setInput] = useState("");
@@ -114,7 +119,7 @@ export default function ChatPage() {
 
       {/* SIDEBAR */}
       <Sidebar 
-      
+
         onSelectChat={loadMessages}
         onNewChat={() => {
           setMessages([]);
@@ -122,7 +127,7 @@ export default function ChatPage() {
         }}
 
       />
-
+    
       {/* CHAT AREA */}
       <div className="flex flex-col flex-1 relative">
 
