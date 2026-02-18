@@ -8,11 +8,22 @@ const handler = NextAuth({
       clientId: process.env.GITHUB_ID!,
       clientSecret: process.env.GITHUB_SECRET!,
     }),
+
     GoogleProvider({
       clientId: process.env.GOOGLE_ID!,
       clientSecret: process.env.GOOGLE_SECRET!,
     }),
   ],
+
+  // ✅ IMPORTANT: forces NextAuth + middleware to use YOUR login page
+  pages: {
+    signIn: "/login",
+  },
+
+  session: {
+    strategy: "jwt",
+  },
+
   secret: process.env.NEXTAUTH_SECRET,
 });
 
