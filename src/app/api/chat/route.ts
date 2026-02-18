@@ -7,13 +7,7 @@ import { getStock } from "@/lib/stock";
 import { getNextRace } from "@/lib/f1";
 
 export async function POST(req: Request) {
-  const { message, userId } = await req.json();
-
-  await db.insert(messages).values({
-    userId,
-    role: "user",
-    content: message,
-  });
+  const { message, chatId } = await req.json();
 
   const lower = message.toLowerCase();
   let response: any;
@@ -35,15 +29,15 @@ export async function POST(req: Request) {
       messages: [{ role: "user", content: message }],
     });
 
-    const text = await result.text;
-    response = { type: "text", content: text };
+    response = { type: "text", content: await result.text };
   }
 
   await db.insert(messages).values({
-    userId,
+    chatId,
     role: "assistant",
     content: JSON.stringify(response),
   });
+  console.log(response);
 
   return Response.json(response);
 }

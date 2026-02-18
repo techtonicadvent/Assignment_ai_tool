@@ -1,95 +1,92 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
+import Sidebar from "@/components/Sidebar";
 
 export default function ChatPage() {
   const { data: session } = useSession();
   const [messages, setMessages] = useState<any[]>([]);
   const [input, setInput] = useState("");
+  const [chatId, setChatId] = useState<string | null>(null);
+
+  const loadMessages = async (id: string) => {
+    const res = await fetch(`/api/chats/messages?chatId=${id}`);
+    const data = await res.json();
+    setMessages(data);
+    setChatId(id);
+  };
+
+  const createChat = async (firstMsg: string) => {
+    const res = await fetch("/api/chats/new", {
+      method: "POST",
+      body: JSON.stringify({
+        userId: session?.user?.email,
+        firstMessage: firstMsg,
+      }),
+    });
+
+    const chat = await res.json();
+    setChatId(chat.id);
+    return chat.id;
+  };
 
   const sendMessage = async () => {
     if (!input) return;
 
-    setMessages((prev) => [...prev, { type: "text", content: input, user: true }]);
+    let id = chatId;
+    if (!id) id = await createChat(input);
+
+    setMessages(prev => [...prev, { type: "text", content: input, user: true }]);
 
     const res = await fetch("/api/chat", {
       method: "POST",
       body: JSON.stringify({
         message: input,
-        userId: session?.user?.email,
+        chatId: id,
       }),
     });
 
     const data = await res.json();
-    setMessages((prev) => [...prev, data]);
+    setMessages(prev => [...prev, data]);
     setInput("");
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
-      <div className="mx-auto max-w-xl space-y-4">
+    <div className="flex h-screen bg-gray-100">
+      <Sidebar onSelectChat={loadMessages} onNewChat={() => {
+        setChatId(null);
+        setMessages([]);
+      }} />
 
-        {messages.map((m, i) => {
-          if (m.type === "weather") {
-            return (
-              <div key={i} className="rounded-xl bg-white p-4 shadow">
-                <div className="text-sm text-gray-500">Weather</div>
-                <div className="text-lg font-semibold">{m.city}</div>
-                <div className="text-3xl">{m.temperature}°C</div>
-                <div className="text-gray-600">{m.condition}</div>
-              </div>
-            );
-          }
-
-          if (m.type === "stock") {
-            return (
-              <div key={i} className="rounded-xl bg-white p-4 shadow">
-                <div className="text-sm text-gray-500">Stock Price</div>
-                <div className="text-lg font-semibold">{m.symbol}</div>
-                <div className="text-3xl">${m.price}</div>
-              </div>
-            );
-          }
-
-          if (m.type === "f1") {
-            return (
-              <div key={i} className="rounded-xl bg-white p-4 shadow">
-                <div className="text-sm text-gray-500">Next F1 Race</div>
-                <div className="text-lg font-semibold">{m.race}</div>
-                <div className="text-gray-600">{m.location}</div>
-                <div className="text-gray-500">{m.date}</div>
-              </div>
-            );
-          }
-
-          return (
+      <div className="flex flex-1 flex-col">
+        <div className="flex-1 overflow-auto p-6 space-y-4">
+          {messages.map((m, i) => (
             <div
               key={i}
-              className={`rounded p-3 ${
+              className={`max-w-[70%] rounded-xl px-4 py-3 ${
                 m.user ? "ml-auto bg-black text-white" : "bg-white shadow"
               }`}
             >
               {m.content}
             </div>
-          );
-        })}
+          ))}
+        </div>
 
-        <div className="flex gap-2 pt-4">
+        <div className="border-t bg-white p-4 flex gap-3">
           <input
-            className="flex-1 rounded border p-2"
+            className="flex-1 rounded-lg border p-2"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Ask something..."
+            placeholder="Ask anything..."
           />
           <button
             onClick={sendMessage}
-            className="rounded bg-black px-4 py-2 text-white"
+            className="rounded-lg bg-black px-6 py-2 text-white"
           >
             Send
           </button>
         </div>
-
       </div>
     </div>
   );
