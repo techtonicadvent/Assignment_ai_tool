@@ -6,8 +6,6 @@ import { getWeather } from "@/lib/weather";
 import { getStock } from "@/lib/stock";
 import { getNextRace } from "@/lib/f1";
 
-export const runtime = "edge";
-
 export async function POST(req: Request) {
   const { message, userId } = await req.json();
 
