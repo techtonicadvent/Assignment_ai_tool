@@ -2,6 +2,7 @@ import { streamText } from "ai";
 import { groq } from "@ai-sdk/groq";
 import { db } from "@/lib/db";
 import { messages } from "@/lib/schema";
+import { getWeather } from "@/lib/weather";
 
 export const runtime = "edge";
 
@@ -15,20 +16,28 @@ export async function POST(req: Request) {
     content: message,
   });
 
-  // Generate AI response
-  const result = streamText({
-    model: groq("llama-3.1-8b-instant"),
-    messages: [{ role: "user", content: message }],
-  });
+  let responseText = "";
 
-  const response = await result.text;
+  // Simple tool detection
+  if (message.toLowerCase().includes("weather")) {
+    const words = message.split(" ");
+    const city = words[words.length - 1] || "Bangalore";
+    responseText = await getWeather(city);
+  } else {
+    const result = streamText({
+      model: groq("llama-3.1-8b-instant"),
+      messages: [{ role: "user", content: message }],
+    });
+
+    responseText = await result.text;
+  }
 
   // Save AI response
   await db.insert(messages).values({
     userId,
     role: "assistant",
-    content: response,
+    content: responseText,
   });
 
-  return new Response(response);
+  return new Response(responseText);
 }
