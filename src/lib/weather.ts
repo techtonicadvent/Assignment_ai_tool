@@ -8,9 +8,13 @@ export async function getWeather(city: string) {
     const data = await res.json();
   
     if (!data.current) {
-      return `Weather data not found for ${city}.`;
+      return { type: "text", content: `Weather not found for ${city}` };
     }
   
-    return `Weather in ${city}: ${data.current.temp_c}°C, ${data.current.condition.text}`;
+    return {
+      type: "weather",
+      city: data.location.name,
+      temperature: data.current.temp_c,
+      condition: data.current.condition.text,
+    };
   }
-  

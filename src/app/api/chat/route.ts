@@ -15,32 +15,35 @@ export async function POST(req: Request) {
     content: message,
   });
 
-  let responseText = "";
-
   const lower = message.toLowerCase();
+  let response: any;
 
-  if (lower.includes("weather")) {
+  if (lower.startsWith("weather")) {
     const city = message.replace(/weather/i, "").trim() || "Bangalore";
-    responseText = await getWeather(city);
-  } else if (lower.includes("stock")) {
+    response = await getWeather(city);
+
+  } else if (lower.startsWith("stock")) {
     const symbol = message.replace(/stock/i, "").trim() || "AAPL";
-    responseText = await getStock(symbol);
-  } else if (lower.includes("f1") || lower.includes("race")) {
-    responseText = await getNextRace();
+    response = await getStock(symbol);
+
+  } else if (lower.includes("next f1") || lower.includes("next race")) {
+    response = await getNextRace();
+
   } else {
     const result = streamText({
       model: groq("llama-3.1-8b-instant"),
       messages: [{ role: "user", content: message }],
     });
 
-    responseText = await result.text;
+    const text = await result.text;
+    response = { type: "text", content: text };
   }
 
   await db.insert(messages).values({
     userId,
     role: "assistant",
-    content: responseText,
+    content: JSON.stringify(response),
   });
 
-  return new Response(responseText);
+  return Response.json(response);
 }

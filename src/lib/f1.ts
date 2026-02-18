@@ -1,29 +1,24 @@
 export async function getNextRace() {
     try {
-      const res = await fetch("https://ergast.com/api/f1/current.json");
+      const res = await fetch(
+        "https://api.jolpi.ca/ergast/f1/current/next.json"
+      );
   
       const data = await res.json();
-      const races = data?.MRData?.RaceTable?.Races;
+      const race = data?.MRData?.RaceTable?.Races?.[0];
   
-      if (!races || races.length === 0) {
-        return "No race schedule available.";
+      if (!race) {
+        return { type: "text", content: "No upcoming race found." };
       }
   
-      // Find next upcoming race
-      const today = new Date();
-  
-      const next = races.find((race: any) => {
-        return new Date(race.date) >= today;
-      });
-  
-      if (!next) {
-        const last = races[races.length - 1];
-        return `Last race: ${last.raceName} in ${last.Circuit.Location.locality}`;
-      }
-  
-      return `🏎 Next F1 Race: ${next.raceName} in ${next.Circuit.Location.locality} on ${next.date}`;
+      return {
+        type: "f1",
+        race: race.raceName,
+        location: race.Circuit.Location.locality,
+        date: race.date,
+      };
     } catch {
-      return "F1 service unavailable.";
+      return { type: "text", content: "F1 service unavailable." };
     }
   }
   
